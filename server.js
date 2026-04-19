@@ -24,19 +24,19 @@ connectDB();
 // =========================
 // (Exercise 2)
 // =========================
-app.get("/api/instructors/search", async (req, res) => {
-    try {
-        const keyword = req.query.keyword || "";
+ app.get("/api/instructors/search", async (req, res) => {
+     try {
+         const keyword = req.query.keyword || "";
 
-        const result = await db.collection("instructors").find({
-            name: { $regex: keyword, $options: "i" }
-        }).toArray();
+         const result = await db.collection("instructors").find({
+             name: { $regex: keyword, $options: "i" }
+         }).toArray();
 
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+         res.json(result);
+     } catch (error) {
+         res.status(500).json({ message: error.message });
+     }
+ });
 
 
 // =========================
@@ -44,28 +44,53 @@ app.get("/api/instructors/search", async (req, res) => {
 // =========================
 app.get("/api/instructors", async (req, res) => {
     try {
+        const keyword = req.query.keyword || "";
         const specialization = req.query.specialization;
 
-        console.log("SPECIALIZATION:", specialization);
+        const page = parseInt(req.query.page) || 0;
+        const size = parseInt(req.query.size) || 5;
 
+        const sortParam = req.query.sort;
+
+        console.log("KEYWORD:", keyword);
+        console.log("SPECIALIZATION:", specialization);
+        console.log("PAGE:", page);
+        console.log("SIZE:", size);
+
+        // COMBINED FILTER + SEARCH
         let query = {};
 
-        if (specialization) {
-            query = { specialization: specialization };
+        if (keyword) {
+            query.name = { $regex: keyword, $options: "i" };
         }
 
-        console.log("QUERY:", query);
+        if (specialization) {
+            query.specialization = specialization;
+        }
 
+        // SORTING
+        let sortOption = { _id: 1 };
+
+        if (sortParam) {
+            const [field, direction] = sortParam.split(",");
+            const order = direction === "desc" ? -1 : 1;
+            sortOption = { [field]: order };
+        }
+
+        // FINAL QUERY
         const result = await db.collection("instructors")
             .find(query)
+            .sort(sortOption)
+            .skip(page * size)
+            .limit(size)
             .toArray();
 
         res.json(result);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
-
 
 // =========================
 // START SERVER
