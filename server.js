@@ -11,10 +11,14 @@ const client = new MongoClient(url);
 
 let db;
 
-// ✅ CONNECT TO DATABASE (IMPORTANT)
+// CONNECT TO DATABASE (IMPORTANT)
 async function connectDB() {
     await client.connect();
     db = client.db("SchoodDB");
+
+    // ADD INDEX HERE
+    await db.collection("instructors").createIndex({ name: 1 });
+
     console.log("Connected to MongoDB");
 }
 
@@ -52,10 +56,13 @@ app.get("/api/instructors", async (req, res) => {
 
         const sortParam = req.query.sort;
 
-        console.log("KEYWORD:", keyword);
-        console.log("SPECIALIZATION:", specialization);
-        console.log("PAGE:", page);
-        console.log("SIZE:", size);
+        console.log("===== INSTRUCTOR API REQUEST =====");
+        console.log("Keyword:", keyword || "None");
+        console.log("Specialization:", specialization || "None");
+        console.log("Page:", page);
+        console.log("Size:", size);
+        console.log("Sort:", sortParam || "Default (_id asc)");
+        console.log("==================================");
 
         // COMBINED FILTER + SEARCH
         let query = {};
